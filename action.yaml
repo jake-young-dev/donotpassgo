@@ -1,0 +1,57 @@
+name: "donotpassgo"
+description: "go security checks and unit tests"
+inputs:
+  test-library: #TEST_LIBRARY
+    description: "if set, tests are run with the specific library (standard|ginkgo)"
+    required: false
+    default: "none"
+  test-version: #TEST_VERSION
+    description: "the test library version, if the library is none or standard this value is ignored"
+    required: false
+    default: "latest"
+  test-fail: #TEST_FAIL
+    description: "override switch to prevent jobs from failing when unit tests do"
+    required: false
+    default: "yes"
+  static: #STATIC_FLAG
+    description: "if set, static code checks are ran with gosec (yes|no)"
+    required: false
+    default: "yes"
+  static-fail: #STATIC_FAIL
+    description: "override switch to prevent jobs from failing when static code analysis does"
+    required: false
+    default: "yes"
+  vulnerability: #VULN_CHECK
+    description: "if set, dependencies are scanned with govulncheck (yes|no)"
+    required: false
+    default: "yes"
+  vulnerability-fail: #VULN_FAIL
+    description: "override switch to prevent jobs from failing when vulnerability scan does"
+    required: false
+    default: "yes"
+  
+runs:
+  using: "composite"
+  steps:
+    - name: "install dependencies"
+      shell: bash
+      run:  ${{ github.action_path }}/src/install.sh
+      env:
+        TEST_LIBRARY: ${{ inputs.test-library }}
+        TEST_VERSION: ${{ inputs.test-version }}
+
+    - name: "run unit tests"
+      shell: bash
+      run:  ${{ github.action_path }}/src/test.sh
+      env:
+        TEST_LIBRARY: ${{ inputs.test-library }}
+        TEST_FAIL: ${{ inputs.test-fail }}
+
+    - name: "run security checks"
+      shell: bash
+      run:  ${{ github.action_path }}/src/security.sh
+      env:
+        STATIC_FLAG: ${{ inputs.static }}
+        STATIC_FAIL: ${{ inputs.static-fail }}
+        VULN_CHECK: ${{ inputs.vulnerability }}
+        VULN_FAIL: ${{ inputs.vulnerability-fail }}
